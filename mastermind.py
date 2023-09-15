@@ -25,10 +25,10 @@ def response(guess, code):
     """Return the number of black and white pegs for a guess and a code.
 
     Black pegs are given for each peg in guess that has the correct both
-    color and position in the code.
+    colour and position in the code.
 
-    White pegs mean a correct color but in wrong position. In case of
-    more than 1 peg of a certain color in the guess, only those
+    White pegs mean a correct colour but in wrong position. In case of
+    more than 1 peg of a certain colour in the guess, only those
     corresponding to the number of same-colored pegs in the code will be
     get a white peg, not counting the peg awarded a black peg.
 
@@ -59,7 +59,12 @@ def response(guess, code):
         del _code[idx]
         del _guess[idx]
 
-    whites = sum([g in _code for g in _guess])
+    # WRONG: whites = sum([g in _code for g in _guess])
+    whites = 0
+    for g in _guess:
+        if g in _code:
+            whites += 1
+            _code.remove(g)
 
     return blacks, whites
 
@@ -67,7 +72,7 @@ def response(guess, code):
 def knuth(guess='rrgg', code='ycmb', verbose=False):
     """Mastermind - Knuth algorithm to break the code.
 
-    Implemented 6 color, 4 pegs. Repeating colors is allowed.
+    Implemented 6 colours, 4 pegs. Repeating colours is allowed.
     """
 
     # 1. Create the set S of 1,296 possible codes
@@ -99,16 +104,19 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
         if verbose:
             print(f'    S has {len(S)} elements.')
 
-        # 6. Apply minimax technique to find a next guess as follows:
-        guesses_worst_score = dict()
+        # 6. Apply minimax technique to find a next guess
 
+        # Keep track of the worst score per guess
+        # Higher score is worse, therefore `max(scores)`
+        guesses_worst_score = dict()
         for g in S:
             scores = defaultdict(int)
             for c in S:
                 scores[response(g, c)] += 1
-            worst_score = max(scores.values())  # higher s is worse
+            worst_score = max(scores.values())  
             guesses_worst_score[g] = worst_score
 
+        # Minimax: best of the worst score: min(max(scores))
         best_score = min(guesses_worst_score.values())
 
         if verbose:
@@ -123,6 +131,8 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
                     print(f'"{"".join(tmp_guess)}"', end=' ')
             print()
 
+        # Guesses with best_score are not necessarily unique.
+        # Picks the first guess with `best_score`
         guess = ''.join(
             list(guesses_worst_score.keys()
                 )[list(guesses_worst_score.values()).index(best_score)])
