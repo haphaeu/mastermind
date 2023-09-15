@@ -77,7 +77,8 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
 
     # 1. Create the set S of 1,296 possible codes
     S = list(itertools.product('rgbcym', repeat=4))
-
+    T = S[:]
+    
     count = 0
     while True:
         count += 1
@@ -95,14 +96,16 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
 
         # Remove current guess
         S.remove(tuple(guess))
+        if guess in T:
+            T.remove(tuple(guess))
 
-        # 5. Remove from S any code that would not give the same
+        # 5. Remove from T any code that would not give the same
         # response of colored and white pegs.
-        for c in S:
+        for c in T:
             if not r == response(guess, c):
-                S.remove(c)
+                T.remove(c)
         if verbose:
-            print(f'    S has {len(S)} elements.')
+            print(f'    T has {len(T)} elements.')
 
         # 6. Apply minimax technique to find a next guess
 
@@ -111,7 +114,7 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
         guesses_worst_score = dict()
         for g in S:
             scores = defaultdict(int)
-            for c in S:
+            for c in T:
                 scores[response(g, c)] += 1
             worst_score = max(scores.values())  
             guesses_worst_score[g] = worst_score
@@ -133,9 +136,23 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
 
         # Guesses with best_score are not necessarily unique.
         # Picks the first guess with `best_score`
-        guess = ''.join(
-            list(guesses_worst_score.keys()
-                )[list(guesses_worst_score.values()).index(best_score)])
+        #guess = ''.join(
+        #    list(guesses_worst_score.keys()
+        #        )[list(guesses_worst_score.values()).index(best_score)])
+        next_guesses = []
+        for tentative_guess, score in guesses_worst_score.items():
+            if score == best_score:
+                next_guesses.append(tentative_guess)
+
+        for next_guess in next_guesses:
+            if next_guess in T:
+                guess = ''.join(next_guess)
+                break
+        else:
+            for next_guess in next_guesses:
+                if next_guess in S:
+                    guess = ''.join(next_guess)
+                    break
 
 
 def main():
