@@ -50,19 +50,17 @@ def response(guess, code):
     _guess = list(guess)
     _code = list(code)
 
-    blacks = whites = 0
-    index_blacks = []
-    for i, (c, g) in enumerate(zip(_code, _guess)):
-        if c == g:
-            blacks += 1
-            index_blacks.append(i)
+    index_blacks = [
+        i for i, (c, g) in 
+        enumerate(zip(_code, _guess)) if c == g
+    ]
+    blacks = len(index_blacks)
 
     index_blacks.reverse()
     for idx in index_blacks:
         del _code[idx]
         del _guess[idx]
 
-    # WRONG: whites = sum([g in _code for g in _guess])
     whites = 0
     for g in _guess:
         if g in _code:
@@ -127,19 +125,13 @@ def knuth(guess='rrgg', code='ycmb', verbose=False, iteractive=False):
             return
 
         # Remove current guess
-        if guess in S:
-            S.remove(tuple(guess))
-        #T.remove(tuple(guess))
+        S.remove(tuple(guess))
+        T.remove(tuple(guess))
 
         # 5. Remove from S any code that would not give the same
         # response of colored and white pegs.
-        c_2b_removed = []
-        for c in S:
-            if not r == response(guess, c):
-                c_2b_removed.append(c)
+        S[:] = [c for c in S if response(guess, c) == r]
 
-        for c in c_2b_removed:
-            S.remove(c)
         if verbose:
             print(f'    S has {len(S)} elements.')
 
