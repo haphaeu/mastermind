@@ -21,6 +21,9 @@ import itertools
 from collections import defaultdict
 
 
+PEGS = 'rgbcym'
+
+
 def response(guess, code):
     """Return the number of black and white pegs for a guess and a code.
 
@@ -76,12 +79,17 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
     """
 
     # 1. Create the set S of 1,296 possible codes
-    S = list(itertools.product('rgbcym', repeat=4))
+    S = list(itertools.product(PEGS, repeat=4))
     T = S[:]
-    
+    if verbose:
+        print(f'    S has {len(S)} elements.')
+
     count = 0
     while True:
         count += 1
+        if count > 12:
+            print('Code not found.')
+            return
 
         # 3. Play the guess to get a response
         r = response(guess, code)
@@ -95,17 +103,21 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
             return
 
         # Remove current guess
-        S.remove(tuple(guess))
-        if guess in T:
-            T.remove(tuple(guess))
+        if guess in S:
+            S.remove(tuple(guess))
+        #T.remove(tuple(guess))
 
-        # 5. Remove from T any code that would not give the same
+        # 5. Remove from S any code that would not give the same
         # response of colored and white pegs.
-        for c in T:
+        c_2b_removed = []
+        for c in S:
             if not r == response(guess, c):
-                T.remove(c)
+                c_2b_removed.append(c)
+
+        for c in c_2b_removed:
+            S.remove(c)
         if verbose:
-            print(f'    T has {len(T)} elements.')
+            print(f'    S has {len(S)} elements.')
 
         # 6. Apply minimax technique to find a next guess
 
@@ -115,7 +127,8 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
         for g in S:
             scores = defaultdict(int)
             for c in T:
-                scores[response(g, c)] += 1
+                r = response(g, c)
+                scores[r] += 1
             worst_score = max(scores.values())  
             guesses_worst_score[g] = worst_score
 
