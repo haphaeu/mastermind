@@ -72,7 +72,25 @@ def response(guess, code):
     return blacks, whites
 
 
-def knuth(guess='rrgg', code='ycmb', verbose=False):
+def get_response():
+    while True:
+        blacks = int(input('    How many blacks? '))
+        
+        if blacks == 4:
+            return 4, 0
+
+        whites = int(input('    How many whites? '))
+        if (0 <= blacks <= 4 and
+            0 <= whites <= 4 and
+            whites + blacks <= 4 and
+            not (blacks == 3 and whites == 1)
+        ):
+            return blacks, whites
+        else:
+            print('Invalid input. Again...')
+
+
+def knuth(guess='rrgg', code='ycmb', verbose=False, iteractive=False):
     """Mastermind - Knuth algorithm to break the code.
 
     Implemented 6 colours, 4 pegs. Repeating colours is allowed.
@@ -92,10 +110,16 @@ def knuth(guess='rrgg', code='ycmb', verbose=False):
             return
 
         # 3. Play the guess to get a response
-        r = response(guess, code)
-        blacks, whites = r
+        if not iteractive:
+            r = response(guess, code)
+            blacks, whites = r
+            print(f'[{count}] {guess=} -> {blacks=}, {whites=}')
+        else:
+            print(f'[{count}] {guess=} -> ')
+            r = get_response()
+            blacks, whites = r
+            print(f'  -> {blacks=}, {whites=}')
 
-        print(f'[{count}] {guess=} -> {blacks=}, {whites=}')
 
         # 4. If the response is four colored key pegs, the game is won
         if blacks == 4:
@@ -177,9 +201,17 @@ def main():
                         help='First guess.')
     parser.add_argument('-c', '--code', type=str, default='mcyb', nargs='?',
                         help='Code to be broken.')
+    parser.add_argument('-i', '--iteractive', action='store_const',
+                        help='Play the game iteractively. Code is unknown.'
+                             ' User inputs the response per guess.',
+                        const=True, default=False)
     args = parser.parse_args()
 
-    knuth(guess=args.guess, code=args.code, verbose=args.verbose)
+    knuth(guess=args.guess, 
+          code=args.code, 
+          verbose=args.verbose,
+          iteractive=args.iteractive,
+          )
 
 
 if __name__ == '__main__':
