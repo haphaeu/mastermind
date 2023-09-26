@@ -71,6 +71,9 @@ def response(guess, code):
 
 
 def get_response():
+    """In an interactive game, the code keeper gives the reponse
+    manually for each guess.
+    """
     while True:
         blacks = int(input('    How many blacks? '))
         
@@ -108,15 +111,15 @@ def knuth(guess='rrgg', code='ycmb', verbose=False, iteractive=False):
             return
 
         # 3. Play the guess to get a response
+        print(f'[{count}] {guess=} ', end='')
         if not iteractive:
             r = response(guess, code)
             blacks, whites = r
-            print(f'[{count}] {guess=} -> {blacks=}, {whites=}')
+            print(f'-> {blacks=}, {whites=}')
         else:
-            print(f'[{count}] {guess=} -> ')
+            print()
             r = get_response()
             blacks, whites = r
-            print(f'  -> {blacks=}, {whites=}')
 
 
         # 4. If the response is four colored key pegs, the game is won
