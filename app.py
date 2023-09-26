@@ -31,7 +31,7 @@ class Window(QtWidgets.QWidget):
         self.setLayout(grid)
         self.mousePressEvent = self.mouse_clicked
         self.setWindowTitle("Mastermind")
-        self.setMinimumSize(490, 490)
+        self.setMinimumSize(200, 400)
         self.reset()
         self.show()
 
@@ -48,14 +48,20 @@ class Window(QtWidgets.QWidget):
 
     def play(self):
         self.count += 1
-        guess = self.guesses[self.active_row]
+        guess = "".join(self.guesses[self.active_row])
         print(f"[{self.count}] {guess=} ", end="")
         resp = mm.get_response(guess, self.code)
         blacks, whites = resp
         print(f"-> {blacks=}, {whites=}")
 
+        self.responses[self.active_row] = (
+            "k" * blacks + "w" * whites + "o" * (4 - blacks - whites)
+        )
+
         if blacks == 4:
             print(f"The code is {guess}/{self.code}.")
+            self.active_row = -1
+            return
 
         mm.prune(self.S, self.T, guess, resp, verbose=False)
 
@@ -100,7 +106,7 @@ class Window(QtWidgets.QWidget):
         col = x // self.peg_box_size
         print(f"clicked round {row+1}, peg {col+1}")
 
-        if not row == self.active_row:
+        if not row == self.active_row or self.active_row == -1:
             return
 
         self.guesses[row][col] = PEGS[PEGS.find(self.guesses[row][col]) + 1]
@@ -115,6 +121,9 @@ class Window(QtWidgets.QWidget):
             self.reset()
             self.update()
         elif e.key() == QtCore.Qt.Key_P:
+            if self.active_row == -1:
+                print("game is over")
+                return
             self.play()
             self.update()
         elif e.key() == QtCore.Qt.Key_A:
