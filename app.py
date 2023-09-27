@@ -32,6 +32,13 @@ class Window(QtWidgets.QWidget):
         self.mousePressEvent = self.mouse_clicked
         self.setWindowTitle("Mastermind")
         self.setMinimumSize(200, 400)
+
+        # The game has 3 modes:
+        #   "auto": computer is code breaker and keeper.
+        #   "breaker": user tries to break the code. The computer gives feedback.
+        #   "keeper": user is the code keeper. The computer tries to break the code.
+        self.game_mode = "breaker"
+
         self.reset()
         self.show()
 
@@ -47,33 +54,55 @@ class Window(QtWidgets.QWidget):
         self.T = self.S[:]
 
     def play(self):
-        self.count += 1
-        guess = "".join(self.guesses[self.active_row])
-        print(f"[{self.count}] {guess=} ", end="")
-        resp = mm.get_response(guess, self.code)
-        blacks, whites = resp
-        print(f"-> {blacks=}, {whites=}")
+        def validate(g):
+            """Validate a user input guess"""
+            return len(g) == 4 and set(g).issubset(set(mm.PEGS))
 
-        self.responses[self.active_row] = (
-            "k" * blacks + "w" * whites + "o" * (4 - blacks - whites)
-        )
+        if self.game_mode in {"auto", "keeper"} and self.active_row == 0:
+            self.guesses[self.active_row] = list("rrgg")
+
+        guess = "".join(self.guesses[self.active_row])
+        if not validate(guess):
+            print("Invalid guess. Try again.")
+            return
+
+        self.count += 1
+        print(f"[{self.count}] {guess=} ", end="")
+
+        if self.game_mode in {"auto", "breaker"}:
+            resp = mm.get_response(guess, self.code)
+            blacks, whites = resp
+            self.responses[self.active_row] = (
+                "k" * blacks + "w" * whites + "o" * (4 - blacks - whites)
+            )
+        else:  # self.game_mode == 'keeper':
+            resp_str = self.responses[self.active_row]
+            resp = resp_str.count("k"), resp_str.count("w")
+            blacks, whites = resp
+
+        print(f"-> {blacks=}, {whites=}")
 
         if blacks == 4:
             print(f"The code is {guess}/{self.code}.")
             self.active_row = -1
             return
 
-        mm.prune(self.S, self.T, guess, resp, verbose=False)
+        if self.game_mode in {"auto", "keeper"}:
+            mm.prune(self.S, self.T, guess, resp, verbose=False)
 
         self.active_row += 1
-        guess = self.guesses[self.active_row]
-        guess[:] = mm.get_next_guess(self.S, self.T, verbose=False)
+
+        if self.game_mode in {"auto", "keeper"}:
+            guess = self.guesses[self.active_row]
+            guess[:] = mm.get_next_guess(self.S, self.T, verbose=False)
+
+        self.update()
 
     def update_geometry(self):
         # ratio between h/w
         self.geom_ratio = 2
         # code pegs width ratio to w
-        self.w1r = 0.8
+        self.w1r = 0.75
         # response pegs witdh ratio to w
         self.w2r = 1.0 - self.w1r
         # pegs padding
@@ -106,7 +135,7 @@ class Window(QtWidgets.QWidget):
         col = x // self.peg_box_size
         print(f"clicked round {row+1}, peg {col+1}")
 
-        if not row == self.active_row or self.active_row == -1:
+        if not row == self.active_row or self.active_row == -1 or col > 3:
             return
 
         self.guesses[row][col] = PEGS[PEGS.find(self.guesses[row][col]) + 1]
@@ -119,25 +148,28 @@ class Window(QtWidgets.QWidget):
         if e.key() == QtCore.Qt.Key_R:
             print("Reset board.")
             self.reset()
-            self.update()
         elif e.key() == QtCore.Qt.Key_P:
             if self.active_row == -1:
                 print("game is over")
                 return
             self.play()
-            self.update()
         elif e.key() == QtCore.Qt.Key_A:
-            self.solve_me()
+            self.game_mode = "auto"
+        elif e.key() == QtCore.Qt.Key_K:
+            self.game_mode = "keeper"
+        elif e.key() == QtCore.Qt.Key_B:
+            self.game_mode = "breaker"
+        self.update()
 
     def paintEvent(self, e):
-        print("paintEvent() called")
+        # print("paintEvent() called")
         qp = QPainter()
         qp.begin(self)
         self.drawLines(qp)
         qp.end()
 
     def drawLines(self, qp):
-        print("drawLines() called")
+        # print("drawLines() called")
 
         pen = qp.pen()
 
@@ -190,7 +222,7 @@ class Window(QtWidgets.QWidget):
                     qp.drawEllipse(x1, y1, s, s)
                     i += 1
 
-        # qp.drawText(10, 20, "Score: %.1f%%" % score())
+        qp.drawText(10, 20, f"Game mode: {self.game_mode}")
 
 
 if __name__ == "__main__":
