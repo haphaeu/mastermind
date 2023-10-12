@@ -61,6 +61,8 @@ The `Keeper` mode is not implemented.
 
 Press `R` anytime to reset the board.
 
+![GUI ](gui.png)
+
 # TODO
 
 ## CLI
