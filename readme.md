@@ -24,7 +24,7 @@ For exaple:
     guess = ccyy => blacks = 1, whites = 1
     guess = cybm => blacks = 4
 
-# Use
+# Use - CLI
 
 This implementation has 4 game modes:
 
@@ -38,9 +38,41 @@ using Donald Knuth's algorithm.
 
 To play the game iteractivelly, use the argument options `-k` to
 play as code keeer, and `-b` to play as code breaker. Note that
-passing both `-k -b` will lead to a game where the user(s) has to
+passing both `-k -b` will lead to a game where the user has to
 input both the guesses and give feedback - in this case, wouldn't it
 be more fun to play on a piece of paper?
 
+# Use - GUI
+
+A graphical interface, a very ugly and simple one at that, is
+implemented for the game. 
+
+This interface has 3 game modes: `Auto`, `Breaker`, `Keeper`. Just
+press `A-B-K` to switch between modes.
+
+In `Breaker` mode, use the mouse to switch between colors for 
+each peg. When you're happy with your guess, press `P` to play
+that round and get feedback on your guess.
+
+In `Auto` mode, the computer will do the guess and give feedback,
+just press `P` to move on to new round.
+
+The `Keeper` mode is not implemented.
+
+Press `R` anytime to reset the board.
+
+# TODO
+
+## CLI
+
+  - [x] Implement game modes
+  - [x] Add command line arguments
 
 
+## GUI
+
+  - [ ] Input code to be broken, for `Auto` and `Breaker` modes.
+  - [ ] Show messages in the GUI rather than in the prompt.
+  - [ ] Highlight active row
+  - [ ] Implement use feedback
+  
