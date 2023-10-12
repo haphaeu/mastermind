@@ -41,6 +41,7 @@ class Window(QtWidgets.QWidget):
 
         self.reset()
         self.show()
+        self.help()
 
     def reset(self):
         self.active_row = 0
@@ -54,6 +55,23 @@ class Window(QtWidgets.QWidget):
         self.S = list(itertools.product(mm.PEGS, repeat=4))
         self.T = self.S[:]
 
+    def help(self):
+        msg = ('Mastermind \n\n'
+               'Choose game mode by pressing:\n\n'
+               ' A: auto - computer vs computer\n'
+               ' B: breaker - you are the code braker.\n'
+               ' K: keeper - you are the code keeper.\n\n'
+               'Switch between colors by clicking the pegs.\n\n'
+               'If you are the code breaker, click on the bigger pegs\n'
+               'until all 4 have a set color.\n\n'
+               'If you are the code keeper, click on the smaller pegs\n'
+               'to give feedback on the code pegs.\n\n'
+               ' Play the next round by pressing P\n\n'
+               'To show this help, press H'
+        )
+        box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Help', msg)
+        box.exec()
+        
     def play(self):
         if self.game_mode == "auto":
             self.computer_guess()
@@ -108,6 +126,13 @@ class Window(QtWidgets.QWidget):
         resp_str = self.responses[self.active_row - 1]
         resp = resp_str.count("k"), resp_str.count("w")
         mm.prune(self.S, self.T, last_guess, resp, verbose=False)
+
+        # check if S is not empty
+        if not self.S:
+            print('WARNING: S has become empty.')
+            self.active_row = -1
+            return
+        
         next_guess = self.guesses[self.active_row]
         next_guess[:] = mm.get_next_guess(self.S, self.T, verbose=False)
 
@@ -203,59 +228,52 @@ class Window(QtWidgets.QWidget):
     def update_geometry(self):
         # ratio between h/w
         self.geom_ratio = 2
-        # code pegs width ratio to w
-        self.w1r = 0.75
-        # response pegs witdh ratio to w
-        self.w2r = 1.0 - self.w1r
         # pegs padding
         self.pegs_pad = 10
         # response padding
-        self.resp_pad = 10
+        self.resp_pad = 5
         # size of each square box with the pegs
-        self.peg_box_size = int((self.w * self.w1r) / 4)
+        self.box_size = self.w // 5
         # size of the pegs
-        self.peg_size = int(self.peg_box_size - 2 * self.pegs_pad)
-        # size of the box with responses
-        self.response_box_size = int(self.w * self.w2r)
+        self.peg_size = self.box_size - 2 * self.pegs_pad
         # size of each reponse peg
-        self.response_size = int((self.response_box_size - 4 * self.resp_pad) / 2)
-
-        print(f"{self.peg_size=}, {self.response_size=}")
+        self.response_size = self.box_size // 2 - 2 * self.resp_pad
+        #print(f"{self.peg_size=}, {self.response_size=}")
 
     def resizeEvent(self, event):
-        print("resizeEvent() called")
+        #print("resizeEvent() called")
         super().resizeEvent(event)
         self.w = self.size().width()  # window width
         self.h = self.size().height()  # window height
         self.update_geometry()
 
     def mouse_clicked(self, event):
-        print("mouse_clicked() called")
+        #print("mouse_clicked() called")
 
         if self.game_mode == "auto":
             return
 
         x = event.pos().x()
         y = event.pos().y()
-        row = y // self.peg_box_size
-        col = x // self.peg_box_size
+        row = y // self.box_size
+        col = x // self.box_size
 
         if not row == self.active_row or self.active_row == -1:
             return
 
         if self.game_mode == "breaker" and col < 4:
             # switch between the colors
-            print(f"clicked round {row+1}, peg {col+1}")
+            #print(f"clicked round {row+1}, peg {col+1}")
             self.guesses[row][col] = PEGS[PEGS.find(self.guesses[row][col]) + 1]
-            print(f"{''.join(self.guesses[row])}")
+            #print(f"{''.join(self.guesses[row])}")
 
         elif self.game_mode == "keeper" and col == 4:
-            xi = x - 4 * self.peg_box_size
-            yi = y - self.active_row * self.peg_box_size
-            coli = xi // (self.response_box_size / 2)
-            rowi = yi // (self.response_box_size / 2)
+            xi = x - 4 * self.box_size
+            yi = y - self.active_row * self.box_size
+            coli = xi // (self.box_size // 2)
+            rowi = yi // (self.box_size // 2)
             idx = int(coli + 2 * rowi)
-            print(f"clicked response {row+1}, peg {idx+1}")
+            #print(f"clicked response {row+1}, peg {idx+1}")
             self.responses[row][idx] = RESP[RESP.find(self.responses[row][idx]) + 1]
 
         self.update()
@@ -277,6 +295,8 @@ class Window(QtWidgets.QWidget):
             self.game_mode = "keeper"
         elif e.key() == QtCore.Qt.Key_B:
             self.game_mode = "breaker"
+        elif e.key() == QtCore.Qt.Key_H:
+            self.help()
         self.update()
 
     def paintEvent(self, e):
@@ -315,6 +335,10 @@ class Window(QtWidgets.QWidget):
         # background
         qp.fillRect(0, 0, w, h, QtCore.Qt.gray)
 
+        # active row
+        y = self.active_row * self.box_size
+        qp.fillRect(0, y, w, self.box_size, QtCore.Qt.white)
+        
         # draw the board borders
         pen.setWidth(5)
 
@@ -322,28 +346,32 @@ class Window(QtWidgets.QWidget):
         for row in range(12):
             guess = self.guesses[row]
             response = self.responses[row]
-            y = row * self.peg_box_size + self.pegs_pad
-
+            y = row * self.box_size + self.pegs_pad
+            s = self.peg_size
             # draw the guesses pegs
             for col in range(4):
-                x = col * self.peg_box_size + self.pegs_pad
-                s = self.peg_size
+                x = col * self.box_size + self.pegs_pad    
                 qp.setBrush(colors[guess[col]])
                 qp.drawEllipse(x, y, s, s)
 
-            x = 4 * self.peg_box_size + self.pegs_pad
+            x = 4 * self.box_size
+            y = row * self.box_size
+            s = self.response_size
             i = 0
             # draw the response pegs
             for r in range(2):
-                y1 = y + r * self.response_size + r * self.resp_pad
+                y1 = y + r * self.box_size // 2 + self.resp_pad
                 for c in range(2):
-                    x1 = x + c * self.response_size + c * self.resp_pad
-                    s = self.response_size
+                    x1 = x + c * self.box_size // 2 + self.resp_pad   
                     qp.setBrush(responses_colors[response[i]])
                     qp.drawEllipse(x1, y1, s, s)
                     i += 1
-
-        qp.drawText(10, 20, f"Game mode: {self.game_mode}")
+                    
+        qp.fillRect(0, h - 12, w, h, QtCore.Qt.white)
+        if self.active_row >= 0:
+            qp.drawText(10, h - 2, f"Game mode: {self.game_mode}")
+        else:
+            qp.drawText(10, h - 2, f"Game over. Press 'R' to reset.")
 
 
 if __name__ == "__main__":
