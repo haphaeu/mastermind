@@ -3,8 +3,8 @@ Work ongoing
 this doesn't do anything yet rather than solving it brute-force.
 """
 import itertools
-import random
-import tensorflow
+#import random
+#import tensorflow
 
 from mastermind2 import PEGS, get_response
 
