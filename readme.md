@@ -57,7 +57,9 @@ that round and get feedback on your guess.
 In `Auto` mode, the computer will do the guess and give feedback,
 just press `P` to move on to new round.
 
-The `Keeper` mode is not implemented.
+In `Keeper` mode, use the mouse and click on the small feedback
+circles on the right side of the coloured pegs to give feedback. 
+When done, press `P` for the next round.
 
 Press `R` anytime to reset the board.
 
@@ -76,5 +78,5 @@ Press `R` anytime to reset the board.
   - [ ] Input code to be broken, for `Auto` and `Breaker` modes.
   - [ ] Show messages in the GUI rather than in the prompt.
   - [ ] Highlight active row
-  - [ ] Implement use feedback
+  - [x] Implement user feedback
   
